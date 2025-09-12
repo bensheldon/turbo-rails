@@ -6,6 +6,11 @@ class TurboCableStreamSourceElement extends HTMLElement {
   static observedAttributes = ["channel", "signed-stream-name"]
 
   async connectedCallback() {
+    if (this.disconnecting) {
+      this.disconnecting = false;
+      return;
+    }
+    
     connectStreamSource(this)
     this.subscription = await subscribeTo(this.channel, {
       received: this.dispatchMessageEvent.bind(this),
@@ -15,6 +20,10 @@ class TurboCableStreamSourceElement extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.disconnecting = true;
+    await new Promise(resolve => setTimeout(resolve, 0))
+    if (!this.disconnecting) return;
+    
     disconnectStreamSource(this)
     if (this.subscription) this.subscription.unsubscribe()
     this.subscriptionDisconnected()
